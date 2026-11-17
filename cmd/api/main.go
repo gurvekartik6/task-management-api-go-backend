@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"task-management-api/internal/middleware"
 	"task-management-api/internal/router"
 	"task-management-api/internal/task"
 )
@@ -16,8 +17,15 @@ func main() {
 	// Initialize service
 	taskService := task.NewService(repository)
 
-	// Initialize routes
-	handler := router.New(taskService)
+	// Initialize router
+	apiHandler := router.New(taskService)
+
+	// Apply middleware
+	handler := middleware.RequestID(
+		middleware.Logging(
+			middleware.Recovery(apiHandler),
+		),
+	)
 
 	// Configure HTTP server
 	server := &http.Server{
