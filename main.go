@@ -5,27 +5,21 @@ import (
 	"net/http"
 )
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("Welcome to Task Management API")
-
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Home Page")
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Println(w, `{"status" : "healthy"}`)
-
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, `{"server" : "http://localhost:8080", "status" : "running"}`)
 }
-
 func main() {
-	fmt.Println("This is the Main Function")
 
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/health", healthHandler)
+	fmt.Println("This is the main function ")
 
-	fmt.Println("Server runnling on http://localhost:8080")
+	http.HandleFunc("/", HomeHandler)
+	http.HandleFunc("/health", HealthHandler)
+
+	fmt.Println("Server running on the http://localhost:8080")
 
 	err := http.ListenAndServe(":8080", nil)
 
