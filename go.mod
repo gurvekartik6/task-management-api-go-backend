@@ -1,3 +1,3 @@
-module project_02_task_management_api
+module task-management-api
 
-go 1.27.3
+go 1.24
