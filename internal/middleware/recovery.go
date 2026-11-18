@@ -8,11 +8,10 @@ import (
 	"task-management-api/internal/response"
 )
 
+// Recovery catches panics raised by downstream handlers in the same goroutine.
+// If no response has been committed, it sends a generic HTTP 500 response.
 func Recovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(
-		w http.ResponseWriter,
-		r *http.Request,
-	) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		recorder := newResponseRecorder(w)
 
 		defer func() {
@@ -24,8 +23,7 @@ func Recovery(next http.Handler) http.Handler {
 					debug.Stack(),
 				)
 
-				if recorder.bytes == 0 &&
-					recorder.statusCode == http.StatusOK {
+				if !recorder.wroteHeader {
 					response.Error(
 						recorder,
 						http.StatusInternalServerError,

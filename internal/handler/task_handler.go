@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -11,13 +12,33 @@ import (
 	"task-management-api/internal/task"
 )
 
-type TaskHandler struct {
-	service *task.Service
+type TaskService interface {
+	Create(ctx context.Context, input task.CreateTaskInput) (task.Task, error)
+	GetAll(ctx context.Context) ([]task.Task, error)
+	GetByID(ctx context.Context, id int) (task.Task, error)
+	Update(ctx context.Context, id int, input task.UpdateTaskInput) (task.Task, error)
+	Patch(ctx context.Context, id int, patch task.TaskPatch) (task.Task, error)
+	Delete(ctx context.Context, id int) error
 }
 
-func NewTaskHandler(service *task.Service) *TaskHandler {
+type TaskHandler struct {
+	service TaskService
+}
+
+func NewTaskHandler(service TaskService) *TaskHandler {
 	return &TaskHandler{
 		service: service,
+	}
+}
+
+func writeTaskServiceError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, task.ErrTaskNotFound):
+		response.Error(w, http.StatusNotFound, "task not found")
+	case errors.Is(err, task.ErrInvalidTask):
+		response.Error(w, http.StatusBadRequest, err.Error())
+	default:
+		response.Error(w, http.StatusInternalServerError, "internal server error")
 	}
 }
 
@@ -83,7 +104,7 @@ func (h *TaskHandler) Create(
 
 	created, err := h.service.Create(r.Context(), input)
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, err.Error())
+		writeTaskServiceError(w, err)
 		return
 	}
 
@@ -133,12 +154,7 @@ func (h *TaskHandler) Update(
 
 	updated, err := h.service.Update(r.Context(), id, input)
 	if err != nil {
-		if errors.Is(err, task.ErrTaskNotFound) {
-			response.Error(w, http.StatusNotFound, "task not found")
-			return
-		}
-
-		response.Error(w, http.StatusBadRequest, err.Error())
+		writeTaskServiceError(w, err)
 		return
 	}
 
@@ -197,12 +213,7 @@ func (h *TaskHandler) Patch(
 
 	updated, err := h.service.Patch(r.Context(), id, patch)
 	if err != nil {
-		if errors.Is(err, task.ErrTaskNotFound) {
-			response.Error(w, http.StatusNotFound, "task not found")
-			return
-		}
-
-		response.Error(w, http.StatusBadRequest, err.Error())
+		writeTaskServiceError(w, err)
 		return
 	}
 

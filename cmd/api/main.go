@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"task-management-api/internal/middleware"
@@ -27,9 +28,14 @@ func main() {
 		),
 	)
 
-	// Configure HTTP server
+	// Configure HTTP server. PORT can be set per environment; 8080 is the default.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	server := &http.Server{
-		Addr:              ":8080",
+		Addr:              ":" + port,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -37,7 +43,7 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	log.Println("Server starting on http://localhost:8080")
+	log.Printf("Server starting on http://localhost:%s", port)
 
 	if err := server.ListenAndServe(); err != nil &&
 		err != http.ErrServerClosed {

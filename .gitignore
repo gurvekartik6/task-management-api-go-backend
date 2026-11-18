@@ -1,0 +1,11 @@
+# Go build outputs
+*.exe
+*.test
+*.out
+/task-api
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
