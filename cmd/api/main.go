@@ -1,22 +1,36 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"task-management-api/internal/database"
 	"task-management-api/internal/middleware"
 	"task-management-api/internal/router"
 	"task-management-api/internal/task"
 )
 
 func main() {
-	// Initialize repository
-	repository := task.NewMemoryRepository()
 
-	// Initialize service
-	taskService := task.NewService(repository)
+	startupCtx, cancel := context.WithTimeout(
+		context.Background(),
+		5*time.Second,
+	)
+	defer cancel()
+
+	databaseURL := os.Getenv("DATABASE_URL")
+
+	db, err := database.Open(startupCtx, databaseURL)
+	if err != nil {
+		log.Fatalf("database startup failed: %v", err)
+	}
+	defer db.Close()
+
+	taskRepository := task.NewPostgresRepository(db)
+	taskService := task.NewService(taskRepository)
 
 	// Initialize router
 	apiHandler := router.New(taskService)
